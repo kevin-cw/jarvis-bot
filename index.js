@@ -1,6 +1,6 @@
 const express = require('express');
 const line = require('@line/bot-sdk');
-const { Configuration, OpenAIApi } = require('openai');
+const OpenAI = require('openai');
 require('dotenv').config();
 
 const app = express();
@@ -12,9 +12,9 @@ const config = {
 
 const client = new line.Client(config);
 
-const openai = new OpenAIApi(new Configuration({
+const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
-}));
+});
 
 app.post('/webhook', line.middleware(config), async (req, res) => {
   const events = req.body.events;
@@ -23,19 +23,18 @@ app.post('/webhook', line.middleware(config), async (req, res) => {
       const userText = event.message.text;
 
       const gptPrompt = `
-你是一個營養師，請幫我分析這一餐的內容，計算出大概的熱量、蛋白質與碳水化合物。
-輸出簡單清楚。不要廢話。內容如下：
+你是一位營養師，請幫我分析以下一餐的內容，預估總熱量、蛋白質、碳水化合物。
+請輸出簡單清楚的結果，不要多餘廢話。餐點如下：
 "${userText}"
-請直接回答。
-      `;
+`;
 
       try {
-        const completion = await openai.createChatCompletion({
+        const completion = await openai.chat.completions.create({
           model: "gpt-3.5-turbo",
           messages: [{ role: "user", content: gptPrompt }]
         });
 
-        const replyText = completion.data.choices[0].message.content;
+        const replyText = completion.choices[0].message.content;
 
         return client.replyMessage(event.replyToken, {
           type: 'text',
