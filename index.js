@@ -1,28 +1,66 @@
 const express = require('express');
 const line = require('@line/bot-sdk');
+const { Configuration, OpenAIApi } = require('openai');
+require('dotenv').config();
+
 const app = express();
 
 const config = {
-  channelAccessToken: 'saL3wQf0xoUsCyma1ougV57yS3JXWRdHT+n/JBeQhzmOBI+ryqQNj1GYoV9/udujhs9bGQOfcV7wJtlmtSRpPZwCzMrGubIcuG0yuXKX6tGIWMRoAv4G0eBRofMSlCgVSeYFt8H+SNiDYRCvZ0sv6gdB04t89/1O/w1cDnyilFU=',
-  channelSecret: '21ae88911a3b64fcc3dbba6c03694f1e'
+  channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
+  channelSecret: process.env.CHANNEL_SECRET,
 };
 
 const client = new line.Client(config);
 
-app.post('/webhook', line.middleware(config), (req, res) => {
-  Promise
-    .all(req.body.events.map(event => {
-      if (event.type === 'message' && event.message.type === 'text') {
+const openai = new OpenAIApi(new Configuration({
+  apiKey: process.env.OPENAI_API_KEY
+}));
+
+app.post('/webhook', line.middleware(config), async (req, res) => {
+  const events = req.body.events;
+  const results = await Promise.all(events.map(async (event) => {
+    if (event.type === 'message' && event.message.type === 'text') {
+      const userText = event.message.text;
+
+      const gptPrompt = `
+你是一個營養師，請幫我分析這一餐的內容，計算出大概的熱量、蛋白質與碳水化合物。
+輸出簡單清楚。不要廢話。內容如下：
+"${userText}"
+請直接回答。
+      `;
+
+      try {
+        const completion = await openai.createChatCompletion({
+          model: "gpt-3.5-turbo",
+          messages: [{ role: "user", content: gptPrompt }]
+        });
+
+        const replyText = completion.data.choices[0].message.content;
+
         return client.replyMessage(event.replyToken, {
           type: 'text',
-          text: `Jarvis 收到：「${event.message.text}」✅`
+          text: replyText
+        });
+
+      } catch (err) {
+        console.error('GPT 回應錯誤:', err);
+        return client.replyMessage(event.replyToken, {
+          type: 'text',
+          text: 'Jarvis 分析失敗了🥲 請稍後再試'
         });
       }
+    } else {
       return Promise.resolve(null);
-    }))
-    .then(result => res.json(result));
+    }
+  }));
+
+  res.json(results);
 });
 
+console.log('📦 環境變數讀取測試：');
+console.log('CHANNEL_ACCESS_TOKEN:', process.env.CHANNEL_ACCESS_TOKEN);
+console.log('OPENAI_API_KEY:', process.env.OPENAI_API_KEY ? '存在 ✅' : '❌ 沒讀到');
+
 app.listen(process.env.PORT || 3000, () => {
-  console.log('🚀 Jarvis 開始工作啦！');
+  console.log('🚀 Jarvis GPT 模式上線啦！');
 });
