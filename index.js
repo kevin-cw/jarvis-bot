@@ -1,4 +1,3 @@
-// 改為從 Cron-job 傳遞時間與訊息的版本
 const express = require('express');
 const line = require('@line/bot-sdk');
 require('dotenv').config();
@@ -14,13 +13,14 @@ const config = {
 const client = new line.Client(config);
 const USER_ID = 'U6169d7be03e2f9a1dc41a70f8a7f4fb5'; // 用戶 LINE ID
 
-// 確認伺服器狀態
+// 確認伺服器狀態（GET 用來 ping 測試）
 app.get('/webhook', (req, res) => {
   res.send('✅ Jarvis is awake and ready to push!');
 });
 
-// 新版：透過 Cron-job 傳送 POST 請求來推播訊息
+// 接收 Cron-job 傳來的 POST 請求推播訊息
 app.post('/push', async (req, res) => {
+  console.log('🔍 收到請求內容：', req.body);
   const { message } = req.body;
 
   if (!message) {
@@ -41,9 +41,7 @@ app.post('/push', async (req, res) => {
   }
 });
 
+// 啟動伺服器
 app.listen(process.env.PORT || 3000, () => {
   console.log('🚀 Jarvis 推播模式啟動（B方案）！');
 });
-
-app.post('/push', async (req, res) => {
-  console.log('🔍 收到請求內容：', req.body);
