@@ -1,4 +1,3 @@
-// 定時推播功能
 const express = require('express');
 const line = require('@line/bot-sdk');
 require('dotenv').config();
@@ -11,9 +10,9 @@ const config = {
 };
 
 const client = new line.Client(config);
-const USER_ID = 'U6169d7be03e2f9a1dc41a70f8a7f4fb5'; // 用戶 LINE ID
+const USER_ID = 'U6169d7be03e2f9a1dc41a70f8a7f4fb5'; // 你的 LINE ID
 
-// 定義要發送的訊息內容
+// 設定定時訊息
 const dailyReminders = [
   { time: '08:00', message: '☀️ 早安，王子殿下👑，今天是充滿活力的一天💪🏻' },
   { time: '10:00', message: '🥐 精神如何，早餐吃了什麼呢？' },
@@ -21,16 +20,16 @@ const dailyReminders = [
   { time: '19:00', message: '🍴 王子殿下👑，晚餐想吃什麼呢，快到ChatGPT跟我討論吧？' },
   { time: '20:00', message: '🏃‍♂️ 吃飽休息後，記得該運動一下吧！' },
   { time: '21:00', message: '🌙 最後....晚餐吃了什麼呢？' },
-  { time: '23:00', message: '🛌 睡前提醒：今天有運動嗎？也讓我幫你整理三餐紀錄吧！' }
-  { time: '00:25', message: '測試訊息' }
+  { time: '23:00', message: '🛌 睡前提醒：今天有運動嗎？也讓我幫你整理三餐紀錄吧！' },
+  { time: '00:55', message: '🧪 測試訊息：如果你看到這條代表定時推播成功' } 
 ];
 
-// 提供一個 ping 用的 GET 路由
+// 確認 webhook 正常
 app.get('/webhook', (req, res) => {
   res.send('✅ Jarvis is awake and ready to push!');
 });
 
-// 觸發推播的 endpoint
+// 用來發送推播訊息的 POST 接口
 app.post('/push', async (req, res) => {
   const now = new Date();
   const hhmm = now.toTimeString().slice(0, 5);
@@ -54,6 +53,7 @@ app.post('/push', async (req, res) => {
   }
 });
 
+// 啟動伺服器
 app.listen(process.env.PORT || 3000, () => {
   console.log('🚀 Jarvis 推播模式啟動！');
 });
