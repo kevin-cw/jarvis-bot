@@ -44,3 +44,6 @@ app.post('/push', async (req, res) => {
 app.listen(process.env.PORT || 3000, () => {
   console.log('🚀 Jarvis 推播模式啟動（B方案）！');
 });
+
+app.post('/push', async (req, res) => {
+  console.log('🔍 收到請求內容：', req.body);
