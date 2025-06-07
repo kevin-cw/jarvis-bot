@@ -1,8 +1,10 @@
+// 改為從 Cron-job 傳遞時間與訊息的版本
 const express = require('express');
 const line = require('@line/bot-sdk');
 require('dotenv').config();
 
 const app = express();
+app.use(express.json()); // 允許接收 JSON 格式資料
 
 const config = {
   channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
@@ -10,50 +12,35 @@ const config = {
 };
 
 const client = new line.Client(config);
-const USER_ID = 'U6169d7be03e2f9a1dc41a70f8a7f4fb5'; // 你的 LINE ID
+const USER_ID = 'U6169d7be03e2f9a1dc41a70f8a7f4fb5'; // 用戶 LINE ID
 
-// 設定定時訊息
-const dailyReminders = [
-  { time: '08:00', message: '☀️ 早安，王子殿下👑，今天是充滿活力的一天💪🏻' },
-  { time: '10:00', message: '🥐 精神如何，早餐吃了什麼呢？' },
-  { time: '13:00', message: '🍱 休息啦，午餐吃了什麼呢？' },
-  { time: '19:00', message: '🍴 王子殿下👑，晚餐想吃什麼呢，快到ChatGPT跟我討論吧？' },
-  { time: '20:00', message: '🏃‍♂️ 吃飽休息後，記得該運動一下吧！' },
-  { time: '21:00', message: '🌙 最後....晚餐吃了什麼呢？' },
-  { time: '23:00', message: '🛌 睡前提醒：今天有運動嗎？也讓我幫你整理三餐紀錄吧！' },
-  { time: '01:15', message: '🧪 測試訊息：如果你看到這條代表定時推播成功' } 
-];
-
-// 確認 webhook 正常
+// 確認伺服器狀態
 app.get('/webhook', (req, res) => {
   res.send('✅ Jarvis is awake and ready to push!');
 });
 
-// 用來發送推播訊息的 POST 接口
+// 新版：透過 Cron-job 傳送 POST 請求來推播訊息
 app.post('/push', async (req, res) => {
-  const now = new Date();
-  const hhmm = now.toTimeString().slice(0, 5);
+  const { message } = req.body;
 
-  const task = dailyReminders.find(r => r.time === hhmm);
+  if (!message) {
+    console.log('❌ 缺少訊息內容');
+    return res.status(400).send('缺少 message 內容');
+  }
 
-  if (task) {
-    try {
-      await client.pushMessage(USER_ID, {
-        type: 'text',
-        text: task.message
-      });
-      console.log(`✅ ${hhmm} 傳送訊息：「${task.message}」`);
-      res.status(200).send('OK');
-    } catch (err) {
-      console.error('❌ 傳送失敗：', err);
-      res.status(500).send('Error');
-    }
-  } else {
-    res.status(200).send('⏰ 非定時時間，不發送');
+  try {
+    await client.pushMessage(USER_ID, {
+      type: 'text',
+      text: message
+    });
+    console.log(`✅ 傳送訊息：「${message}」`);
+    res.status(200).send('OK');
+  } catch (err) {
+    console.error('❌ 傳送失敗：', err);
+    res.status(500).send('Error');
   }
 });
 
-// 啟動伺服器
 app.listen(process.env.PORT || 3000, () => {
-  console.log('🚀 Jarvis 推播模式啟動！');
+  console.log('🚀 Jarvis 推播模式啟動（B方案）！');
 });
