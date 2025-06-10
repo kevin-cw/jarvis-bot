@@ -41,6 +41,21 @@ app.post('/push', async (req, res) => {
   }
 });
 
+// 測試推播路由：打開網址立即送測試訊息
+app.get('/test-push', async (req, res) => {
+  try {
+    await client.pushMessage('U6169d7be03e2f9a1dc41a70f8a7f4fb5', {
+      type: 'text',
+      text: '👋 測試訊息：Jarvis 測試推播成功！'
+    });
+    console.log('✅ 成功送出測試訊息');
+    res.send('✅ 已送出測試訊息！');
+  } catch (err) {
+    console.error('❌ 測試推播失敗：', err);
+    res.status(500).send('❌ 推播失敗');
+  }
+});
+
 // 啟動伺服器
 app.listen(process.env.PORT || 3000, () => {
   console.log('🚀 Jarvis 推播模式啟動（B方案）！');
