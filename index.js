@@ -13,6 +13,16 @@ const config = {
 const client = new line.Client(config);
 const USER_ID = 'U6169d7be03e2f9a1dc41a70f8a7f4fb5'; // 用戶 LINE ID
 
+// 接收 LINE 使用者傳來的訊息，抓出 userId 用來測試推播用
+app.post('/callback', line.middleware(config), (req, res) => {
+  const events = req.body.events;
+  if (events.length > 0) {
+    const userId = events[0].source.userId;
+    console.log('🆔 使用者 ID：', userId);
+  }
+  res.sendStatus(200);
+});
+
 // 確認伺服器狀態（GET 用來 ping 測試）
 app.get('/webhook', (req, res) => {
   res.send('✅ Jarvis is awake and ready to push!');
